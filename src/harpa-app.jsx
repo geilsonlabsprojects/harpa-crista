@@ -103,11 +103,15 @@ export default function HarpaApp() {
           if (num) {
             // Tenta extrair a letra do JSON (suporta múltiplos formatos de exportação)
             let parsedContent = "";
-            if (data.verses) {
+            
+            // Novo: Verifica o formato Holyrics onde lyrics é um objeto com full_text
+            if (data.lyrics && typeof data.lyrics === 'object' && data.lyrics.full_text) {
+              parsedContent = data.lyrics.full_text;
+            } else if (data.verses) {
               parsedContent = data.verses.map(v => v.text || v.texto).join('\n\n');
             } else if (data.letra) {
               parsedContent = data.letra;
-            } else if (data.lyrics) {
+            } else if (typeof data.lyrics === 'string') {
               parsedContent = data.lyrics;
             } else {
               // Fallback caso não ache a chave exata
