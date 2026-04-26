@@ -2,8 +2,8 @@
 <html lang="pt-PT" class="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Harpa Cristã Digital</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Harpa Cristã Premium</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,71 +13,123 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 900: '#14532d' }
+                        primary: { 50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d' }
+                    },
+                    fontFamily: {
+                        sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+                        serif: ['"Merriweather"', 'Georgia', 'serif'],
+                    },
+                    animation: {
+                        'slide-up-player': 'slideUpPlayer 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        slideUpPlayer: {
+                            '0%': { transform: 'translateY(100%)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
                     }
                 }
             }
         }
     </script>
     
+    <!-- JSZip -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         body { 
             -webkit-tap-highlight-color: transparent; 
-            font-family: system-ui, -apple-system, sans-serif;
-            overscroll-behavior-y: contain;
+            overscroll-behavior-y: none; /* Previne o pull-to-refresh em mobile */
+            background-color: #f8fafc;
         }
-        ::-webkit-scrollbar { width: 6px; }
+        .dark body { background-color: #0f172a; }
+        
+        /* Scrollbar customizada */
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .dark ::-webkit-scrollbar-thumb { background: #475569; }
-        
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-        .dark .glass-panel {
-            background: rgba(30, 41, 59, 0.85);
-        }
-        
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        .hidden-safe { display: none !important; }
-        
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Efeitos de Vidro (Glassmorphism) */
+        .glass-header {
+            background: rgba(248, 250, 252, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .dark .glass-header {
+            background: rgba(15, 23, 42, 0.85);
+        }
+        
+        .glass-player {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .dark .glass-player {
+            background: rgba(30, 41, 59, 0.95);
+        }
+        
+        /* Utilidades */
+        .hidden-safe { display: none !important; }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Ajuste para garantir rolagem em dispositivos móveis */
+        /* Lista de hinos fluida */
         #hymn-list {
-            overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            touch-action: pan-y;
+            will-change: transform;
         }
 
-        .lyric-stanza { font-weight: 400; }
-        .lyric-chorus { font-weight: 800; color: #16a34a; }
-        .dark .lyric-chorus { color: #4ade80; }
+        /* Tipografia Elegante para a Letra */
+        .lyric-stanza { 
+            font-weight: 500; 
+            color: #334155;
+            transition: color 0.3s;
+        }
+        .dark .lyric-stanza { color: #e2e8f0; }
+        
+        .lyric-chorus { 
+            font-weight: 700; 
+            font-style: italic;
+            color: #16a34a; 
+            padding-left: 1.25rem;
+            border-left: 4px solid #22c55e;
+            background: linear-gradient(to right, rgba(34, 197, 94, 0.05), transparent);
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin-top: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+        }
+        .dark .lyric-chorus { 
+            color: #4ade80; 
+            border-left-color: #4ade80;
+            background: linear-gradient(to right, rgba(74, 222, 128, 0.08), transparent);
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 overflow-hidden flex flex-col h-screen">
+<body class="text-slate-900 dark:text-slate-100 transition-colors duration-300 overflow-hidden flex flex-col h-screen antialiased">
 
     <!-- Navbar -->
-    <header class="glass-panel sticky top-0 z-40 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex justify-between items-center shadow-sm">
-        <div class="flex items-center gap-2">
-            <div class="p-1.5 bg-primary-600 rounded-lg shadow-lg shadow-primary-500/20">
+    <header class="glass-header sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 px-5 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl shadow-lg shadow-primary-500/30">
                 <i data-lucide="book-open" class="text-white w-5 h-5"></i>
             </div>
-            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-green-500 font-black">Harpa Digital</h1>
+            <h1 class="text-xl font-extrabold tracking-tight">Harpa<span class="text-primary-600 dark:text-primary-400">Digital</span></h1>
         </div>
-        <div class="flex items-center gap-2">
-            <button id="btn-header-download-audio" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition text-primary-600 hidden-safe" title="Transferir Áudios">
+        <div class="flex items-center gap-1">
+            <button id="btn-header-download-audio" class="p-2.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition text-primary-600 hidden-safe" title="Transferir Áudios">
                 <i data-lucide="cloud-download" class="w-5 h-5"></i>
             </button>
-            <button id="btn-theme" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition">
+            <button id="btn-settings" class="p-2.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition text-slate-500 dark:text-slate-400" title="Definições">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+            </button>
+            <button id="btn-theme" class="p-2.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition text-slate-500 dark:text-slate-400">
                 <i data-lucide="moon" id="icon-theme" class="w-5 h-5"></i>
             </button>
         </div>
@@ -85,177 +137,273 @@
 
     <main class="flex-1 overflow-hidden relative w-full max-w-3xl mx-auto flex flex-col">
         
-        <!-- Tela de Setup -->
-        <section id="view-setup" class="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6 fade-in overflow-y-auto hidden-safe">
-            <div class="w-24 h-24 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center mb-2 animate-pulse">
-                <i data-lucide="download-cloud" class="w-12 h-12 text-primary-600 dark:text-primary-400"></i>
+        <!-- Ecrã de Setup (Onboarding) -->
+        <section id="view-setup" class="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-8 fade-in overflow-y-auto hidden-safe">
+            <div class="relative">
+                <div class="absolute inset-0 bg-primary-500 blur-3xl opacity-20 rounded-full animate-pulse"></div>
+                <div class="w-28 h-28 bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/20 rounded-full flex items-center justify-center relative shadow-inner">
+                    <i data-lucide="library" class="w-14 h-14 text-primary-600 dark:text-primary-400"></i>
+                </div>
             </div>
-            <h2 class="text-3xl font-black">Configuração</h2>
-            <p class="text-gray-600 dark:text-gray-400 max-w-md font-medium">
-                Vamos baixar as letras para que possa ler os hinos mesmo sem internet.
-            </p>
             
-            <div id="setup-controls" class="w-full max-w-sm flex flex-col gap-4">
-                <div class="flex items-start gap-3 bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-200 dark:border-gray-700 text-left shadow-md">
-                    <input type="checkbox" id="check-terms" class="mt-1 w-6 h-6 rounded-lg border-gray-300 text-primary-600 focus:ring-primary-500 bg-gray-100 dark:bg-gray-700 dark:border-gray-600 cursor-pointer">
-                    <label for="check-terms" class="text-xs text-gray-600 dark:text-gray-400 cursor-pointer leading-relaxed">
-                        Concordo com os <button onclick="openModal('modal-terms')" class="text-primary-600 dark:text-primary-400 underline font-bold">Termos</button> e a <button onclick="openModal('modal-privacy')" class="text-primary-600 dark:text-primary-400 underline font-bold">Privacidade</button>.
+            <div>
+                <h2 class="text-3xl font-extrabold mb-3 tracking-tight">O seu Hinário Digital</h2>
+                <p class="text-slate-500 dark:text-slate-400 max-w-sm mx-auto text-sm leading-relaxed">
+                    Para uma experiência perfeita e sem interrupções, vamos transferir as letras para acesso offline. É rápido e seguro.
+                </p>
+            </div>
+            
+            <div id="setup-controls" class="w-full max-w-sm flex flex-col gap-5 pt-4">
+                <div class="flex items-start gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 text-left shadow-sm">
+                    <input type="checkbox" id="check-terms" class="mt-0.5 w-5 h-5 rounded-md border-slate-300 text-primary-600 focus:ring-primary-500 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 cursor-pointer transition-all">
+                    <label for="check-terms" class="text-xs text-slate-600 dark:text-slate-400 cursor-pointer leading-tight select-none">
+                        Li e concordo com os <button onclick="openModal('modal-terms')" class="text-primary-600 dark:text-primary-400 font-semibold hover:underline">Termos</button> e a <button onclick="openModal('modal-privacy')" class="text-primary-600 dark:text-primary-400 font-semibold hover:underline">Privacidade</button>.
                     </label>
                 </div>
 
-                <button id="btn-start-download" disabled class="w-full bg-primary-600 hover:bg-primary-700 text-white font-black py-5 px-6 rounded-3xl shadow-xl transition transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 text-lg opacity-50 cursor-not-allowed">
-                    <i data-lucide="check-circle"></i>
-                    Começar Agora
+                <button id="btn-start-download" disabled class="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 font-bold py-4 px-6 rounded-2xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 text-base disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100">
+                    <i data-lucide="download" class="w-5 h-5"></i>
+                    Transferir Letras (1MB)
                 </button>
             </div>
 
-            <div id="download-progress-container" class="w-full max-w-sm hidden-safe space-y-4 text-left p-6 bg-white dark:bg-gray-800 rounded-[32px] shadow-2xl border border-gray-100 dark:border-gray-700">
+            <!-- Progresso do Setup -->
+            <div id="download-progress-container" class="w-full max-w-sm hidden-safe space-y-4 text-left p-6 bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-700 transform scale-95 opacity-0 transition-all duration-500" style="opacity: 1; transform: scale(1)">
                 <div>
-                    <div class="flex justify-between text-sm mb-2 font-black text-gray-800 dark:text-gray-200">
-                        <span id="lbl-status">A aguardar...</span>
+                    <div class="flex justify-between text-sm mb-3 font-bold text-slate-800 dark:text-slate-200">
+                        <span id="lbl-status" class="flex items-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-primary-500"></i> A transferir...</span>
                         <span id="lbl-percentage" class="text-primary-600">0%</span>
                     </div>
-                    <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-4 overflow-hidden mb-2">
-                        <div id="bar-progress" class="bg-primary-500 h-full rounded-full w-0 transition-all duration-300"></div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden mb-3">
+                        <div id="bar-progress" class="bg-gradient-to-r from-primary-400 to-primary-600 h-full rounded-full w-0 transition-all duration-300"></div>
                     </div>
-                    <div class="flex justify-between text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                    <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 tracking-wider">
                         <span id="lbl-speed">-- KB/s</span>
-                        <span id="lbl-size">-- MB / -- MB</span>
+                        <span id="lbl-size">-- / --</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Tela Principal -->
+        <!-- Ecrã Principal da Lista -->
         <section id="view-list" class="flex-1 flex flex-col hidden-safe fade-in h-full">
-            <div class="p-4 bg-white dark:bg-gray-900 z-10 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-                <div class="relative">
-                    <i data-lucide="search" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"></i>
-                    <input type="text" id="input-search" placeholder="Número ou nome do hino..." class="w-full pl-12 pr-4 py-4 bg-gray-100 dark:bg-gray-800 border-2 border-transparent focus:border-primary-500 rounded-2xl outline-none transition font-bold shadow-inner">
+            <div class="p-4 pt-5 bg-transparent z-10 flex-shrink-0">
+                <div class="relative group">
+                    <i data-lucide="search" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors w-5 h-5"></i>
+                    <input type="text" id="input-search" placeholder="Procurar hino..." class="w-full pl-12 pr-12 py-4 bg-white dark:bg-slate-800 border-none rounded-2xl outline-none transition-all shadow-sm focus:shadow-md font-medium text-slate-900 dark:text-white placeholder-slate-400">
+                    <button id="btn-clear-search" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hidden-safe">
+                        <i data-lucide="x-circle" class="w-5 h-5"></i>
+                    </button>
                 </div>
-                <div class="flex gap-2 mt-4 overflow-x-auto pb-1 hide-scrollbar">
-                    <button class="filter-btn active px-6 py-2.5 rounded-xl bg-primary-600 text-white text-xs font-black shadow-lg shadow-primary-500/30 whitespace-nowrap" data-filter="all">TODOS</button>
-                    <button class="filter-btn px-6 py-2.5 rounded-xl bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 text-xs font-black whitespace-nowrap" data-filter="favorites">
-                        FAVORITOS
+                
+                <div class="flex gap-2 mt-4 overflow-x-auto pb-2 hide-scrollbar">
+                    <button class="filter-btn active px-6 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold shadow-md whitespace-nowrap transition-all" data-filter="all">Todos os Hinos</button>
+                    <button class="filter-btn px-6 py-2.5 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold whitespace-nowrap transition-all hover:bg-slate-50 dark:hover:bg-slate-700" data-filter="favorites">
+                        <i data-lucide="heart" class="w-3.5 h-3.5 inline mr-1.5 mb-0.5"></i>Favoritos
                     </button>
                 </div>
             </div>
 
-            <!-- Lista com rolagem garantida -->
-            <div id="hymn-list" class="flex-1 p-4 pb-32"></div>
+            <div id="hymn-list" class="flex-1 px-4 pb-32">
+                <!-- Hinos injetados via JS -->
+            </div>
         </section>
 
     </main>
 
-    <!-- Mini Player -->
-    <div id="mini-player" class="fixed bottom-0 w-full max-w-3xl left-1/2 transform -translate-x-1/2 glass-panel border-t border-gray-200 dark:border-gray-800 p-4 flex items-center justify-between gap-4 slide-up hidden-safe cursor-pointer z-40 shadow-[0_-10px_40px_rgba(0,0,0,0.15)] rounded-t-[32px]">
-        <div class="flex items-center gap-3 flex-1 min-w-0" onclick="openFullPlayer()">
-            <div class="w-12 h-12 bg-primary-600 text-white rounded-2xl flex items-center justify-center flex-shrink-0 font-black shadow-lg shadow-primary-500/30">
+    <!-- Mini Player Inteligente -->
+    <div id="mini-player" class="fixed bottom-4 w-[calc(100%-2rem)] max-w-2xl left-1/2 transform -translate-x-1/2 glass-player border border-slate-200/50 dark:border-slate-700/50 p-2.5 flex items-center justify-between gap-3 fade-in hidden-safe cursor-pointer z-40 shadow-2xl rounded-2xl">
+        <div class="flex items-center gap-3 flex-1 min-w-0 px-2" onclick="openFullPlayer()">
+            <div class="w-10 h-10 bg-slate-100 dark:bg-slate-800 text-primary-600 dark:text-primary-400 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm">
                 <span id="mini-hymn-number">--</span>
             </div>
             <div class="flex flex-col flex-1 min-w-0">
-                <p id="mini-hymn-title" class="font-black text-sm truncate uppercase tracking-tight">Escolha um hino</p>
-                <div class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                    <p class="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase">Disponível para ler</p>
+                <p id="mini-hymn-title" class="font-bold text-sm truncate text-slate-900 dark:text-white">Selecione um hino</p>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                    <span id="mini-indicator" class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                    <p id="mini-status-text" class="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Acesso Imediato</p>
                 </div>
             </div>
         </div>
-        <div class="flex items-center gap-2">
-            <button id="btn-mini-play" class="p-3.5 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition shadow-lg hidden-safe">
+        <div class="flex items-center gap-1">
+            <button id="btn-mini-play" class="p-3 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/50 transition hidden-safe">
                 <i data-lucide="play" id="icon-mini-play" class="w-5 h-5 fill-current"></i>
             </button>
         </div>
     </div>
 
-    <!-- Player Full -->
-    <section id="view-player" class="fixed inset-0 z-50 bg-gray-50 dark:bg-gray-900 flex flex-col hidden-safe fade-in">
-        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 glass-panel">
-            <button onclick="closeFullPlayer()" class="p-3 rounded-2xl bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition">
-                <i data-lucide="chevron-down" class="w-6 h-6"></i>
+    <!-- Leitor Completo (Full Player) -->
+    <section id="view-player" class="fixed inset-0 z-50 bg-white dark:bg-slate-900 flex flex-col hidden-safe animate-slide-up-player">
+        
+        <!-- Header do Player -->
+        <div class="flex items-center justify-between p-4 px-6 pt-safe border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+            <button onclick="closeFullPlayer()" class="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-500">
+                <i data-lucide="chevron-down" class="w-7 h-7"></i>
             </button>
-            <div class="text-center flex-1 min-w-0">
-                <p class="text-[10px] text-primary-600 font-black uppercase tracking-[0.2em] mb-0.5">Hino <span id="player-number">--</span></p>
-                <h2 id="player-title" class="text-base font-black truncate px-6 uppercase">Título</h2>
+            <div class="text-center flex-1 min-w-0 px-4">
+                <p class="text-[10px] text-primary-600 font-bold uppercase tracking-[0.2em] mb-1">Hino <span id="player-number">--</span></p>
+                <h2 id="player-title" class="text-base font-extrabold truncate text-slate-900 dark:text-white">Título do Hino</h2>
             </div>
-            <button id="btn-favorite" class="p-3 rounded-2xl transition">
-                <i data-lucide="heart" id="icon-favorite" class="w-6 h-6 text-gray-400"></i>
-            </button>
+            <div class="flex items-center gap-1 -mr-2">
+                <button onclick="changeFontSize()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-500">
+                    <i data-lucide="a-large-small" class="w-5 h-5"></i>
+                </button>
+                <button id="btn-favorite" class="p-2 rounded-full transition">
+                    <i data-lucide="heart" id="icon-favorite" class="w-6 h-6 text-slate-300 dark:text-slate-600"></i>
+                </button>
+            </div>
         </div>
 
-        <!-- Letras com destaque -->
-        <div id="player-lyrics" class="flex-1 overflow-y-auto p-10 text-xl leading-relaxed text-center whitespace-pre-wrap dark:text-gray-200"></div>
-
-        <div id="player-controls" class="p-8 glass-panel border-t border-gray-200 dark:border-gray-800 rounded-t-[48px] shadow-2xl hidden-safe">
-            <div class="flex items-center gap-4 mb-8">
-                <span id="time-current" class="text-[10px] font-black font-mono text-gray-400">0:00</span>
-                <input type="range" id="audio-progress" value="0" max="100" class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-primary-600">
-                <span id="time-total" class="text-[10px] font-black font-mono text-gray-400">0:00</span>
+        <!-- Área de Letras (Scrollable) -->
+        <div id="player-lyrics-container" class="flex-1 overflow-y-auto px-6 py-8 md:px-12 bg-slate-50/50 dark:bg-[#0f172a]">
+            <div id="player-lyrics" class="max-w-2xl mx-auto text-xl leading-[1.8] text-center whitespace-pre-wrap transition-all duration-300 pb-10">
+                <!-- Letras injetadas aqui -->
             </div>
+        </div>
 
-            <div class="flex items-center justify-between max-w-md mx-auto">
-                <button id="btn-share" class="p-4 text-gray-400 hover:text-primary-600 transition">
-                    <i data-lucide="share-2" class="w-6 h-6"></i>
-                </button>
-                <div class="flex items-center gap-4">
-                    <button id="btn-prev" class="p-4 text-gray-700 dark:text-gray-200 hover:text-primary-600 transition">
-                        <i data-lucide="skip-back" class="w-8 h-8 fill-current"></i>
+        <!-- Área de Controlos de Áudio -->
+        <div id="player-controls" class="shrink-0 p-6 pt-4 pb-safe bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 hidden-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+            
+            <div class="max-w-md mx-auto">
+                <!-- Progress Bar -->
+                <div class="flex items-center gap-3 mb-6">
+                    <span id="time-current" class="text-[10px] font-bold font-mono text-slate-400 w-8 text-right">0:00</span>
+                    <div class="relative flex-1 group h-4 flex items-center cursor-pointer" id="progress-container">
+                        <div class="absolute w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div id="progress-fill" class="h-full bg-primary-500 w-0 relative"></div>
+                        </div>
+                        <div id="progress-thumb" class="absolute h-3 w-3 bg-primary-600 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity -ml-1.5" style="left: 0%"></div>
+                    </div>
+                    <span id="time-total" class="text-[10px] font-bold font-mono text-slate-400 w-8 text-left">0:00</span>
+                </div>
+
+                <!-- Botões -->
+                <div class="flex items-center justify-between px-2">
+                    <button id="btn-share" class="p-3 text-slate-400 hover:text-primary-600 transition">
+                        <i data-lucide="share" class="w-5 h-5"></i>
                     </button>
-                    <button id="btn-play-main" class="p-7 bg-primary-600 text-white rounded-[32px] hover:bg-primary-700 transition transform hover:scale-110 shadow-2xl shadow-primary-500/50">
-                        <i data-lucide="play" id="icon-play-main" class="w-8 h-8 fill-current"></i>
-                    </button>
-                    <button id="btn-next" class="p-4 text-gray-700 dark:text-gray-200 hover:text-primary-600 transition">
-                        <i data-lucide="skip-forward" class="w-8 h-8 fill-current"></i>
+                    <div class="flex items-center gap-6">
+                        <button id="btn-prev" class="text-slate-700 dark:text-slate-300 hover:text-primary-600 transition active:scale-90">
+                            <i data-lucide="skip-back" class="w-8 h-8 fill-current"></i>
+                        </button>
+                        <button id="btn-play-main" class="w-16 h-16 flex items-center justify-center bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg">
+                            <i data-lucide="play" id="icon-play-main" class="w-7 h-7 fill-current ml-1"></i>
+                        </button>
+                        <button id="btn-next" class="text-slate-700 dark:text-slate-300 hover:text-primary-600 transition active:scale-90">
+                            <i data-lucide="skip-forward" class="w-8 h-8 fill-current"></i>
+                        </button>
+                    </div>
+                    <button id="btn-mute" class="p-3 text-slate-400 hover:text-primary-600 transition relative">
+                        <i data-lucide="volume-2" id="icon-mute" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <button id="btn-mute" class="p-4 text-gray-400 hover:text-primary-600 transition">
-                    <i data-lucide="volume-2" id="icon-mute" class="w-6 h-6"></i>
-                </button>
             </div>
         </div>
 
-        <div id="player-no-audio-warning" class="p-6 bg-primary-50 dark:bg-primary-900/20 border-t border-primary-100 dark:border-primary-800 text-center text-xs font-black text-primary-700 dark:text-primary-400 flex items-center justify-center gap-2 uppercase tracking-wide">
-            <i data-lucide="music" class="w-4 h-4"></i>
-            Áudio offline pode ser ativado no menu inicial
+        <!-- Aviso sem Áudio -->
+        <div id="player-no-audio-warning" class="shrink-0 p-4 pb-safe bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 text-center flex flex-col items-center justify-center gap-2">
+            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
+                <i data-lucide="music-4" class="w-3.5 h-3.5"></i> Áudio indisponível
+            </p>
+            <button onclick="closeFullPlayer(); openAudioInstaller();" class="text-[10px] text-primary-600 font-bold uppercase hover:underline">Instalar áudios agora</button>
         </div>
     </section>
 
-    <!-- Modal Container -->
-    <div id="modal-container" class="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-center justify-center hidden-safe p-6">
-        <div class="bg-white dark:bg-gray-900 rounded-[40px] p-8 w-full max-w-md shadow-2xl relative max-h-[80vh] overflow-y-auto" id="modal-content">
-            <button onclick="closeModal()" class="absolute top-6 right-6 text-gray-400 hover:text-gray-600 dark:hover:text-white p-2.5 bg-gray-100 dark:bg-gray-800 rounded-full transition">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-            <div id="modal-body"></div>
+    <!-- Sistema de Modais Genérico -->
+    <div id="modal-container" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center hidden-safe p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-slate-900 rounded-[28px] p-6 w-full max-w-md shadow-2xl relative max-h-[85vh] flex flex-col transform scale-95 transition-transform duration-300" id="modal-content">
+            <div class="flex justify-between items-center mb-4 shrink-0">
+                <h3 id="modal-title" class="text-xl font-extrabold text-slate-900 dark:text-white">Título</h3>
+                <button onclick="closeModal()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-full transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="modal-body" class="overflow-y-auto flex-1 pr-2 custom-scrollbar text-sm text-slate-600 dark:text-slate-400 space-y-4">
+                <!-- Conteúdo -->
+            </div>
         </div>
     </div>
 
-    <!-- Templates Legais -->
-    <template id="template-terms">
-        <h3 class="text-2xl font-black mb-4">Termos de Serviço</h3>
-        <div class="space-y-4 text-gray-600 dark:text-gray-400 text-sm font-medium leading-relaxed">
-            <p>1. <strong>Finalidade:</strong> Este app é uma ferramenta de auxílio para membros e músicos cristãos.</p>
-            <p>2. <strong>Dados:</strong> Não coletamos informações. O download de hinos é feito para o seu próprio aparelho.</p>
-            <p>3. <strong>Copyright:</strong> Respeitamos os direitos autorais. O conteúdo é para uso pessoal e religioso.</p>
+    <!-- Modais de Templates -->
+    <template id="tpl-settings">
+        <div class="space-y-6">
+            <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                <div class="flex items-center gap-3 mb-2">
+                    <i data-lucide="hard-drive" class="w-5 h-5 text-primary-500"></i>
+                    <h4 class="font-bold text-slate-900 dark:text-white">Armazenamento</h4>
+                </div>
+                <p class="text-xs mb-3">O seu dispositivo guarda ficheiros para uso offline.</p>
+                <div class="flex justify-between items-center text-xs font-mono font-bold mb-1">
+                    <span id="storage-status-text">A calcular...</span>
+                </div>
+            </div>
+            
+            <div class="space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">Gerir Dados</h4>
+                <button onclick="clearAudioData()" class="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 transition text-left text-slate-700 dark:text-slate-300">
+                    <span class="font-semibold text-sm">Apagar Áudios</span>
+                    <i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i>
+                </button>
+                <button onclick="factoryReset()" class="w-full flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl hover:bg-red-100 transition text-left text-red-600 dark:text-red-400">
+                    <span class="font-semibold text-sm">Repor Aplicação Completa</span>
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                </button>
+                <p class="text-[10px] text-center text-slate-400">Repor a aplicação apagará todos os ficheiros e os seus favoritos.</p>
+            </div>
         </div>
     </template>
 
-    <template id="template-privacy">
-        <h3 class="text-2xl font-black mb-4">Privacidade</h3>
-        <div class="space-y-4 text-gray-600 dark:text-gray-400 text-sm font-medium leading-relaxed">
-            <p><strong>Privacidade Total:</strong> O Harpa Digital funciona localmente. Seus hinos favoritos e configurações de tema nunca saem do seu telefone.</p>
-            <p><strong>Transferência Segura:</strong> Os arquivos são baixados de servidores seguros e públicos.</p>
+    <template id="tpl-audio-installer">
+        <div class="text-center py-2">
+            <div class="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="headphones" class="w-8 h-8 text-primary-600"></i>
+            </div>
+            <p class="text-sm mb-6 text-slate-600 dark:text-slate-300">A transferência de áudios requer cerca de <strong>100MB</strong>. Recomenda-se o uso de Wi-Fi.</p>
+            <div id="audio-progress-box" class="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl mb-4 text-left">
+                <div class="flex justify-between text-xs font-bold mb-2 text-slate-800 dark:text-slate-200">
+                    <span id="a-status">A aguardar confirmação</span>
+                    <span id="a-pct" class="text-primary-600">0%</span>
+                </div>
+                <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden mb-2">
+                    <div id="a-bar" class="h-full bg-primary-500 w-0 transition-all"></div>
+                </div>
+                <div class="flex justify-between text-[10px] font-bold text-slate-400 font-mono">
+                    <span id="a-speed">--</span>
+                    <span id="a-size">--</span>
+                </div>
+            </div>
+            <button id="btn-start-audio" class="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl shadow-lg active:scale-95 transition">
+                Iniciar Transferência
+            </button>
         </div>
     </template>
 
+    <template id="tpl-terms">
+        <div class="space-y-4">
+            <p>1. <strong>Finalidade:</strong> Este aplicativo destina-se a fins pessoais e devocionais, facilitando o acesso ao hinário.</p>
+            <p>2. <strong>Armazenamento Local:</strong> Todos os ficheiros descarregados residem exclusivamente no seu telemóvel/computador através de tecnologias web (IndexedDB).</p>
+            <p>3. <strong>Direitos:</strong> Respeitamos os direitos de autor das obras. Não comercializamos nenhum áudio ou letra.</p>
+        </div>
+    </template>
+
+    <template id="tpl-privacy">
+        <div class="space-y-4">
+            <p><strong>Privacidade Absoluta:</strong> A Harpa Cristã Premium funciona de forma 100% local no seu navegador após a instalação.</p>
+            <p><strong>Dados:</strong> Não recolhemos, analisamos ou partilhamos informações pessoais, dados de localização, ou hinos favoritos.</p>
+        </div>
+    </template>
+
+    <!-- Elemento de Audio Oculto -->
     <audio id="audio-player"></audio>
 
     <script>
+        // Inicialização de Ícones
         lucide.createIcons();
 
+        // Variáveis e Constantes Globais
         const URL_AUDIO = "https://archive.org/cors/harpaopus/Harpa%28opus%29.zip";
         const URL_LETRAS = "https://archive.org/cors/harpa-letra/harpa-letra.zip";
-        const DB_NAME = "HarpaCristaDB_V2";
+        const DB_NAME = "HarpaCristaPremiumDB";
         const STORE_HYMNS = "hymns";
         const STORE_AUDIO = "audio";
 
@@ -267,12 +415,14 @@
             isMuted: false,
             filter: 'all',
             searchQuery: '',
-            audioAvailable: localStorage.getItem('harpa_audio_downloaded') === 'true'
+            audioAvailable: localStorage.getItem('harpa_audio_installed') === 'true',
+            fontSizeIndex: 1, // 0: Pequeno, 1: Médio, 2: Grande, 3: Gigante
+            fontSizes: ['text-lg', 'text-xl', 'text-2xl', 'text-3xl']
         };
 
         const audioEl = document.getElementById('audio-player');
 
-        // --- DATABASE ---
+        // --- SISTEMA DE BASE DE DADOS (IndexedDB) ---
         const dbPromise = new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, 1);
             request.onupgradeneeded = (e) => {
@@ -315,7 +465,40 @@
             });
         }
 
-        // --- MONITOR DE DOWNLOAD ---
+        async function dbClear(storeName) {
+            const db = await dbPromise;
+            const tx = db.transaction(storeName, 'readwrite');
+            tx.objectStore(storeName).clear();
+            return new Promise(r => tx.oncomplete = r);
+        }
+
+        // --- UTILITÁRIOS ---
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function formatTime(s) {
+            if(isNaN(s)) return "0:00";
+            const m = Math.floor(s/60);
+            const sec = Math.floor(s%60);
+            return `${m}:${sec.toString().padStart(2,'0')}`;
+        }
+
+        // Debounce para pesquisa
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => { clearTimeout(timeout); func(...args); };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // --- FETCH COM PROGRESSO ---
         async function fetchWithProgress(url, onProgress) {
             const startTime = Date.now();
             const response = await fetch(url);
@@ -331,35 +514,58 @@
                 loaded += value.length;
                 
                 const now = Date.now();
-                const duration = (now - startTime) / 1000;
-                const speed = loaded / duration; // bytes por segundo
+                const duration = (now - startTime) / 1000 || 1; 
+                const speed = loaded / duration;
                 
                 if(onProgress) onProgress(loaded, total, speed);
             }
             return new Blob(chunks);
         }
 
-        function formatBytes(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        // --- INICIALIZAÇÃO DA APP ---
+        async function inicializar() {
+            const count = await dbCount(STORE_HYMNS);
+            if(count > 0) {
+                iniciarApp();
+            } else {
+                document.getElementById('view-setup').classList.remove('hidden-safe');
+            }
+            atualizarVisibilidadeBotaoAudio();
         }
 
-        // --- INSTALAÇÃO ---
+        async function iniciarApp() {
+            document.getElementById('view-setup').classList.add('hidden-safe');
+            document.getElementById('view-list').classList.remove('hidden-safe');
+            
+            state.hymns = await dbGetAll(STORE_HYMNS);
+            state.hymns.sort((a,b) => parseInt(a.number) - parseInt(b.number));
+            renderListaHinos();
+        }
+
+        function atualizarVisibilidadeBotaoAudio() {
+            const btn = document.getElementById('btn-header-download-audio');
+            if(state.audioAvailable) btn.classList.add('hidden-safe');
+            else btn.classList.remove('hidden-safe');
+        }
+
+        // --- LÓGICA DE TRANSFERÊNCIA DE LETRAS (ONBOARDING) ---
         const checkTerms = document.getElementById('check-terms');
         const btnStartDownload = document.getElementById('btn-start-download');
 
         checkTerms.onchange = (e) => {
             btnStartDownload.disabled = !e.target.checked;
-            btnStartDownload.classList.toggle('opacity-50', !e.target.checked);
-            btnStartDownload.classList.toggle('cursor-not-allowed', !e.target.checked);
         };
 
         btnStartDownload.onclick = async () => {
             document.getElementById('setup-controls').classList.add('hidden-safe');
-            document.getElementById('download-progress-container').classList.remove('hidden-safe');
+            const progressContainer = document.getElementById('download-progress-container');
+            progressContainer.classList.remove('hidden-safe');
+            
+            // Animação de entrada suave
+            setTimeout(() => {
+                progressContainer.style.opacity = '1';
+                progressContainer.style.transform = 'scale(1)';
+            }, 10);
             
             const lblStatus = document.getElementById('lbl-status');
             const lblPct = document.getElementById('lbl-percentage');
@@ -368,16 +574,20 @@
             const bar = document.getElementById('bar-progress');
 
             try {
-                lblStatus.innerText = "Baixando letras...";
+                lblStatus.innerHTML = `<i data-lucide="download-cloud" class="w-4 h-4 text-primary-500"></i> A transferir letras...`;
+                lucide.createIcons();
+                
                 const blob = await fetchWithProgress(URL_LETRAS, (l, t, s) => {
-                    const p = Math.round((l/t)*100);
+                    const p = t > 0 ? Math.round((l/t)*100) : 0;
                     bar.style.width = p + '%';
                     lblPct.innerText = p + '%';
                     lblSpeed.innerText = formatBytes(s) + '/s';
-                    lblSize.innerText = `${formatBytes(l)} / ${formatBytes(t)}`;
+                    lblSize.innerText = `${formatBytes(l)} ${t>0 ? '/ '+formatBytes(t) : ''}`;
                 });
 
-                lblStatus.innerText = "A descompactar...";
+                lblStatus.innerHTML = `<i data-lucide="database" class="w-4 h-4 text-primary-500"></i> A otimizar dados...`;
+                lucide.createIcons();
+                
                 const zip = await JSZip.loadAsync(blob);
                 const files = Object.keys(zip.files).filter(f => f.endsWith('.json'));
                 
@@ -390,41 +600,381 @@
                         json.number = numMatch[0].padStart(3, '0');
                         await dbPut(STORE_HYMNS, json);
                     }
-                    if(i % 50 === 0) lblStatus.innerText = `Guardando (${i}/${files.length})...`;
+                    if(i % 100 === 0) {
+                        const prog = Math.round((i/files.length)*100);
+                        bar.style.width = prog + '%';
+                        lblPct.innerText = prog + '%';
+                    }
                 }
-                setTimeout(iniciarApp, 500);
+                
+                lblStatus.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 text-green-500"></i> Sucesso!`;
+                bar.style.width = '100%';
+                lblPct.innerText = '100%';
+                lucide.createIcons();
+                
+                setTimeout(iniciarApp, 800);
             } catch(e) {
-                alert("Falha no download. Verifique a internet.");
+                alert("Falha ao transferir dados. Verifique a ligação à internet.");
                 document.getElementById('setup-controls').classList.remove('hidden-safe');
+                progressContainer.classList.add('hidden-safe');
             }
         };
 
-        // --- AUDIO DOWNLOAD ---
-        async function openAudioInstaller() {
-            const body = document.getElementById('modal-body');
-            body.innerHTML = `
-                <div class="text-center p-2">
-                    <h3 class="text-2xl font-black mb-4">BAIXAR ÁUDIOS</h3>
-                    <p class="text-gray-500 text-sm mb-6 font-bold uppercase tracking-tight">Cerca de 100MB de áudio MP3 offline serão instalados no seu aparelho.</p>
-                    <div id="audio-progress-box">
-                        <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-3xl mb-6">
-                             <div class="flex justify-between text-xs font-black mb-2">
-                                <span id="a-status">PRONTO PARA INICIAR</span>
-                                <span id="a-pct">0%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 dark:bg-gray-700 h-3 rounded-full overflow-hidden mb-3">
-                                <div id="a-bar" class="h-full bg-primary-500 w-0 transition-all"></div>
-                            </div>
-                            <div class="flex justify-between text-[9px] font-black text-gray-400">
-                                <span id="a-speed">-- KB/s</span>
-                                <span id="a-size">-- / --</span>
-                            </div>
-                        </div>
-                        <button id="btn-start-audio" class="w-full py-5 bg-primary-600 text-white font-black rounded-2xl shadow-xl shadow-primary-600/30 active:scale-95 transition uppercase tracking-widest">Iniciar Transferência</button>
+        // --- INTERFACE DA LISTA ---
+        const renderListaHinos = () => {
+            const list = document.getElementById('hymn-list');
+            list.innerHTML = "";
+            const q = state.searchQuery.toLowerCase();
+            
+            const filtered = state.hymns.filter(h => {
+                const match = h.number.includes(q) || h.title.toLowerCase().includes(q);
+                return state.filter === 'favorites' ? (match && state.favorites.has(h.number)) : match;
+            });
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-20 text-slate-400">
+                        <i data-lucide="search-x" class="w-16 h-16 mb-4 opacity-50"></i>
+                        <p class="font-medium">Nenhum hino encontrado.</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            filtered.forEach(h => {
+                const isFav = state.favorites.has(h.number);
+                const item = document.createElement('div');
+                item.className = "flex items-center gap-4 p-4 mb-3 bg-white dark:bg-slate-800 rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 dark:border-slate-700/50 active:scale-[0.98] transition-transform cursor-pointer group hover:border-primary-200 dark:hover:border-primary-900/50";
+                item.onclick = () => carregarHino(h.number);
+                item.innerHTML = `
+                    <div class="w-14 h-14 bg-slate-50 dark:bg-slate-900 text-primary-600 dark:text-primary-400 rounded-xl flex items-center justify-center font-black text-lg group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 transition-colors">
+                        ${h.number}
                     </div>
-                </div>
-            `;
-            openModal('modal-generic');
+                    <div class="flex-1 min-w-0">
+                        <h3 class="truncate font-extrabold text-slate-900 dark:text-white">${h.title}</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">Harpa Cristã</p>
+                    </div>
+                    <button onclick="event.stopPropagation(); toggleFav('${h.number}')" class="p-2 -mr-2">
+                        <i data-lucide="heart" class="w-5 h-5 transition-colors ${isFav ? 'fill-red-500 text-red-500' : 'text-slate-300 dark:text-slate-600 group-hover:text-slate-400'}"></i>
+                    </button>
+                `;
+                fragment.appendChild(item);
+            });
+            list.appendChild(fragment);
+            lucide.createIcons();
+        };
+
+        // Pesquisa com Debounce
+        const inputSearch = document.getElementById('input-search');
+        const btnClearSearch = document.getElementById('btn-clear-search');
+        
+        inputSearch.oninput = debounce((e) => {
+            state.searchQuery = e.target.value;
+            if(state.searchQuery.length > 0) btnClearSearch.classList.remove('hidden-safe');
+            else btnClearSearch.classList.add('hidden-safe');
+            renderListaHinos();
+        }, 250);
+
+        btnClearSearch.onclick = () => {
+            inputSearch.value = '';
+            state.searchQuery = '';
+            btnClearSearch.classList.add('hidden-safe');
+            renderListaHinos();
+        };
+
+        // Filtros
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.className = "filter-btn px-6 py-2.5 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold whitespace-nowrap transition-all hover:bg-slate-50 dark:hover:bg-slate-700";
+                });
+                btn.className = "filter-btn active px-6 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold shadow-md whitespace-nowrap transition-all";
+                state.filter = btn.dataset.filter;
+                renderListaHinos();
+            };
+        });
+
+        function toggleFav(n) {
+            state.favorites.has(n) ? state.favorites.delete(n) : state.favorites.add(n);
+            localStorage.setItem('harpa_favorites', JSON.stringify([...state.favorites]));
+            renderListaHinos();
+            if(state.currentHymnId === n) updateFavBtnPlayer();
+        }
+
+        // --- SISTEMA DE PLAYER (Letra e Áudio) ---
+        let audioUrl = null;
+
+        async function carregarHino(num) {
+            state.currentHymnId = num;
+            const h = state.hymns.find(x => x.number === num);
+            if(!h) return;
+
+            // UI Mini Player
+            document.getElementById('mini-hymn-number').innerText = h.number;
+            document.getElementById('mini-hymn-title').innerText = h.title;
+            
+            // UI Full Player
+            document.getElementById('player-number').innerText = h.number;
+            document.getElementById('player-title').innerText = h.title;
+            
+            // Lógica de Renderização das Letras (com Destaque para Coro)
+            const lyricsContainer = document.getElementById('player-lyrics');
+            let lyricsHtml = "";
+            
+            if(h.lyrics?.paragraphs) {
+                lyricsHtml = h.lyrics.paragraphs.map(p => {
+                    const t = p.text.toLowerCase();
+                    const isChorus = t.includes("coro") || t.includes("refrão");
+                    const cssClass = isChorus ? 'lyric-chorus' : 'lyric-stanza mb-8';
+                    return `<div class="${cssClass}">${p.text}</div>`;
+                }).join("");
+            } else {
+                lyricsHtml = `<div class="py-20 text-slate-400 italic font-medium">Letra indisponível para este hino.</div>`;
+            }
+            lyricsContainer.innerHTML = lyricsHtml;
+            document.getElementById('player-lyrics-container').scrollTop = 0;
+            updateFontSizeUI();
+
+            updateFavBtnPlayer();
+
+            // Lógica de Áudio
+            const controls = document.getElementById('player-controls');
+            const warning = document.getElementById('player-no-audio-warning');
+            const miniPlayBtn = document.getElementById('btn-mini-play');
+            const miniStatus = document.getElementById('mini-status-text');
+            const miniIndicator = document.getElementById('mini-indicator');
+
+            const audioBlob = state.audioAvailable ? await dbGet(STORE_AUDIO, num) : null;
+
+            if(audioBlob) {
+                if(audioUrl) URL.revokeObjectURL(audioUrl);
+                audioUrl = URL.createObjectURL(audioBlob);
+                audioEl.src = audioUrl;
+                controls.classList.remove('hidden-safe');
+                warning.classList.add('hidden-safe');
+                miniPlayBtn.classList.remove('hidden-safe');
+                miniStatus.innerText = "Pronto a Tocar";
+                miniIndicator.className = "w-1.5 h-1.5 bg-primary-500 rounded-full animate-pulse";
+                // Play automático (pode ser bloqueado pelo browser se não houver interação)
+                playAudio().catch(e => console.log("Auto-play prevented", e));
+            } else {
+                audioEl.pause();
+                audioEl.src = "";
+                controls.classList.add('hidden-safe');
+                warning.classList.remove('hidden-safe');
+                miniPlayBtn.classList.add('hidden-safe');
+                miniStatus.innerText = "Apenas Letra";
+                miniIndicator.className = "w-1.5 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full";
+                state.isPlaying = false;
+                updatePlayIcons();
+            }
+
+            document.getElementById('mini-player').classList.remove('hidden-safe');
+            openFullPlayer();
+        }
+
+        function updateFavBtnPlayer() {
+            const icon = document.getElementById('icon-favorite');
+            const isFav = state.favorites.has(state.currentHymnId);
+            icon.className = `w-6 h-6 transition-colors ${isFav ? 'fill-red-500 text-red-500' : 'text-slate-300 dark:text-slate-600'}`;
+        }
+        document.getElementById('btn-favorite').onclick = () => toggleFav(state.currentHymnId);
+
+        // Controlos de Fonte (Aumentar/Diminuir Letra)
+        function changeFontSize() {
+            state.fontSizeIndex = (state.fontSizeIndex + 1) % state.fontSizes.length;
+            updateFontSizeUI();
+        }
+        function updateFontSizeUI() {
+            const lyricsDiv = document.getElementById('player-lyrics');
+            // Remove as antigas
+            state.fontSizes.forEach(s => lyricsDiv.classList.remove(s));
+            // Adiciona a nova
+            lyricsDiv.classList.add(state.fontSizes[state.fontSizeIndex]);
+        }
+
+        // Interações de Áudio
+        async function playAudio() { 
+            if(!audioEl.src) return;
+            try { await audioEl.play(); state.isPlaying = true; updatePlayIcons(); } 
+            catch(e) { state.isPlaying = false; updatePlayIcons(); }
+        }
+        function pauseAudio() { audioEl.pause(); state.isPlaying = false; updatePlayIcons(); }
+        
+        function updatePlayIcons() {
+            const iconName = state.isPlaying ? 'pause' : 'play';
+            document.getElementById('icon-mini-play').setAttribute('data-lucide', iconName);
+            document.getElementById('icon-play-main').setAttribute('data-lucide', iconName);
+            // Animacao de icon main
+            const btnMain = document.getElementById('btn-play-main');
+            btnMain.className = state.isPlaying 
+                ? "w-16 h-16 flex items-center justify-center bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400 rounded-full hover:scale-105 active:scale-95 transition-all"
+                : "w-16 h-16 flex items-center justify-center bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg";
+            
+            // Adjust margin for play icon to look centered
+            document.getElementById('icon-play-main').classList.toggle('ml-1', !state.isPlaying);
+            lucide.createIcons();
+        }
+
+        document.getElementById('btn-play-main').onclick = () => state.isPlaying ? pauseAudio() : playAudio();
+        document.getElementById('btn-mini-play').onclick = (e) => { e.stopPropagation(); state.isPlaying ? pauseAudio() : playAudio(); };
+
+        // Botão Mute
+        document.getElementById('btn-mute').onclick = () => {
+            state.isMuted = !state.isMuted;
+            audioEl.muted = state.isMuted;
+            document.getElementById('icon-mute').setAttribute('data-lucide', state.isMuted ? 'volume-x' : 'volume-2');
+            document.getElementById('btn-mute').classList.toggle('text-slate-400', !state.isMuted);
+            document.getElementById('btn-mute').classList.toggle('text-red-500', state.isMuted);
+            lucide.createIcons();
+        };
+
+        // Custom Progress Bar Logic
+        const progressContainer = document.getElementById('progress-container');
+        const progressFill = document.getElementById('progress-fill');
+        const progressThumb = document.getElementById('progress-thumb');
+        
+        function updateProgressUI(percent) {
+            progressFill.style.width = `${percent}%`;
+            progressThumb.style.left = `${percent}%`;
+        }
+
+        audioEl.ontimeupdate = () => {
+            if(!audioEl.duration) return;
+            const pct = (audioEl.currentTime / audioEl.duration) * 100;
+            updateProgressUI(pct);
+            document.getElementById('time-current').innerText = formatTime(audioEl.currentTime);
+            document.getElementById('time-total').innerText = formatTime(audioEl.duration);
+        };
+
+        progressContainer.onmousedown = (e) => seekAudio(e);
+        progressContainer.ontouchstart = (e) => seekAudio(e.touches[0]);
+        
+        function seekAudio(e) {
+            if(!audioEl.duration) return;
+            const rect = progressContainer.getBoundingClientRect();
+            const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+            const pct = x / rect.width;
+            audioEl.currentTime = pct * audioEl.duration;
+            updateProgressUI(pct * 100);
+        }
+
+        audioEl.onended = () => {
+            const idx = state.hymns.findIndex(h => h.number === state.currentHymnId);
+            if(idx < state.hymns.length - 1) carregarHino(state.hymns[idx+1].number);
+        };
+
+        document.getElementById('btn-next').onclick = () => {
+            const idx = state.hymns.findIndex(h => h.number === state.currentHymnId);
+            if(idx < state.hymns.length - 1) carregarHino(state.hymns[idx+1].number);
+        };
+        document.getElementById('btn-prev').onclick = () => {
+            if(audioEl.currentTime > 3) { audioEl.currentTime = 0; return; }
+            const idx = state.hymns.findIndex(h => h.number === state.currentHymnId);
+            if(idx > 0) carregarHino(state.hymns[idx-1].number);
+        };
+
+        // Ações de Partilha
+        document.getElementById('btn-share').onclick = async () => {
+            const h = state.hymns.find(x => x.number === state.currentHymnId);
+            if(!h) return;
+            let txt = `*${h.title}* (Harpa Cristã ${h.number})\n\n`;
+            if(h.lyrics?.paragraphs) txt += h.lyrics.paragraphs.map(p => p.text).join("\n\n");
+            
+            if (navigator.share) {
+                try { await navigator.share({ title: h.title, text: txt }); } 
+                catch(e) { console.log('Partilha cancelada'); }
+            } else {
+                navigator.clipboard.writeText(txt);
+                alert("Letra copiada!");
+            }
+        };
+
+        // --- GESTÃO DE MODAIS E CONFIGURAÇÕES ---
+        const modalContainer = document.getElementById('modal-container');
+        const modalContent = document.getElementById('modal-content');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+
+        function openModal(id, title = "") {
+            modalBody.innerHTML = "";
+            let templateId = id;
+            
+            if(id === 'modal-terms') { title = "Termos de Serviço"; templateId = 'tpl-terms'; }
+            if(id === 'modal-privacy') { title = "Privacidade"; templateId = 'tpl-privacy'; }
+            
+            modalTitle.innerText = title;
+            const tpl = document.getElementById(templateId);
+            if(tpl) modalBody.appendChild(tpl.content.cloneNode(true));
+
+            modalContainer.classList.remove('hidden-safe');
+            // Animação entrada
+            setTimeout(() => {
+                modalContainer.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+            }, 10);
+            lucide.createIcons();
+        }
+
+        function closeModal() {
+            modalContainer.classList.add('opacity-0');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => { modalContainer.classList.add('hidden-safe'); }, 300);
+        }
+
+        function openFullPlayer() { 
+            document.body.classList.add('overflow-hidden'); // impede scroll do fundo
+            document.getElementById('view-player').classList.remove('hidden-safe'); 
+        }
+        function closeFullPlayer() { 
+            document.body.classList.remove('overflow-hidden');
+            document.getElementById('view-player').classList.add('hidden-safe'); 
+        }
+
+        // --- MENU DE CONFIGURAÇÕES E ARMAZENAMENTO ---
+        document.getElementById('btn-settings').onclick = async () => {
+            openModal('tpl-settings', "Configurações");
+            
+            // Estimar armazenamento (apenas em browsers modernos)
+            const statusTxt = document.getElementById('storage-status-text');
+            if (navigator.storage && navigator.storage.estimate) {
+                try {
+                    const est = await navigator.storage.estimate();
+                    const used = formatBytes(est.usage || 0);
+                    statusTxt.innerText = `Utilizados: ${used}`;
+                } catch(e) { statusTxt.innerText = "Armazenamento Local Ativo"; }
+            } else {
+                statusTxt.innerText = "Acesso Offline Ativo";
+            }
+        };
+
+        async function clearAudioData() {
+            if(!confirm("Tem a certeza que deseja apagar todos os áudios transferidos? Terá de transferi-los novamente depois.")) return;
+            try {
+                await dbClear(STORE_AUDIO);
+                localStorage.removeItem('harpa_audio_installed');
+                state.audioAvailable = false;
+                atualizarVisibilidadeBotaoAudio();
+                closeModal();
+                alert("Áudios apagados com sucesso.");
+                if(state.currentHymnId) carregarHino(state.currentHymnId); // Recarrega UI
+            } catch(e) { alert("Erro ao apagar dados."); }
+        }
+
+        async function factoryReset() {
+            if(!confirm("Atenção! Isto irá apagar todas as letras, áudios e favoritos. A aplicação voltará ao estado inicial. Continuar?")) return;
+            try {
+                await dbClear(STORE_AUDIO);
+                await dbClear(STORE_HYMNS);
+                localStorage.clear();
+                window.location.reload();
+            } catch(e) { alert("Erro ao repor a aplicação."); }
+        }
+
+        // --- TRANSFERÊNCIA DE ÁUDIO OPCIONAL ---
+        document.getElementById('btn-header-download-audio').onclick = () => {
+            openModal('tpl-audio-installer', "Instalar Áudios");
             
             document.getElementById('btn-start-audio').onclick = async function() {
                 this.classList.add('hidden-safe');
@@ -435,16 +985,16 @@
                 const sizeLbl = document.getElementById('a-size');
 
                 try {
-                    status.innerText = "BAIXANDO...";
+                    status.innerText = "A Transferir...";
                     const blob = await fetchWithProgress(URL_AUDIO, (l, t, s) => {
-                        const p = Math.round((l/t)*100);
+                        const p = t > 0 ? Math.round((l/t)*100) : 0;
                         bar.style.width = p + '%';
                         pct.innerText = p + '%';
                         speedLbl.innerText = formatBytes(s) + '/s';
-                        sizeLbl.innerText = `${formatBytes(l)} / ${formatBytes(t)}`;
+                        sizeLbl.innerText = `${formatBytes(l)} ${t>0 ? '/ '+formatBytes(t) : ''}`;
                     });
                     
-                    status.innerText = "INSTALANDO...";
+                    status.innerText = "A Extrair Ficheiros...";
                     const zip = await JSZip.loadAsync(blob);
                     const audioFiles = Object.keys(zip.files).filter(f => !zip.files[f].dir);
                     
@@ -455,205 +1005,32 @@
                             const audioBlob = await zip.files[f].async('blob');
                             await dbPut(STORE_AUDIO, audioBlob, num);
                         }
-                        if(i%20 === 0) status.innerText = `INSTALANDO (${i}/${audioFiles.length})`;
+                        if(i%10 === 0) {
+                             const p = Math.round((i/audioFiles.length)*100);
+                             bar.style.width = p + '%';
+                             pct.innerText = p + '%';
+                        }
                     }
                     
-                    localStorage.setItem('harpa_audio_downloaded', 'true');
+                    localStorage.setItem('harpa_audio_installed', 'true');
                     state.audioAvailable = true;
-                    status.innerText = "SUCESSO!";
+                    atualizarVisibilidadeBotaoAudio();
+                    status.innerText = "Concluído!";
+                    bar.style.width = '100%';
+                    pct.innerText = '100%';
+                    
                     setTimeout(() => {
                         closeModal();
-                        document.getElementById('btn-header-download-audio').classList.add('hidden-safe');
                         if(state.currentHymnId) carregarHino(state.currentHymnId);
                     }, 1000);
                 } catch(e) {
-                    status.innerText = "ERRO NO DOWNLOAD";
+                    status.innerText = "Erro na Transferência.";
+                    status.classList.add('text-red-500');
                 }
             };
-        }
-        document.getElementById('btn-header-download-audio').onclick = openAudioInstaller;
-
-        // --- UI & RENDER ---
-        async function inicializar() {
-            const count = await dbCount(STORE_HYMNS);
-            if(count > 0) iniciarApp();
-            else document.getElementById('view-setup').classList.remove('hidden-safe');
-        }
-
-        async function iniciarApp() {
-            document.getElementById('view-setup').classList.add('hidden-safe');
-            document.getElementById('view-list').classList.remove('hidden-safe');
-            if(!state.audioAvailable) document.getElementById('btn-header-download-audio').classList.remove('hidden-safe');
-            
-            state.hymns = await dbGetAll(STORE_HYMNS);
-            state.hymns.sort((a,b) => parseInt(a.number) - parseInt(b.number));
-            renderHymns();
-        }
-
-        function renderHymns() {
-            const list = document.getElementById('hymn-list');
-            list.innerHTML = "";
-            const q = state.searchQuery.toLowerCase();
-            
-            const filtered = state.hymns.filter(h => {
-                const match = h.number.includes(q) || h.title.toLowerCase().includes(q);
-                return state.filter === 'favorites' ? (match && state.favorites.has(h.number)) : match;
-            });
-
-            filtered.forEach(h => {
-                const item = document.createElement('div');
-                item.className = "flex items-center gap-4 p-5 mb-4 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 active:scale-95 transition cursor-pointer";
-                item.onclick = () => carregarHino(h.number);
-                item.innerHTML = `
-                    <div class="w-12 h-12 bg-primary-50 dark:bg-primary-900/20 text-primary-600 rounded-2xl flex items-center justify-center font-black shadow-inner">${h.number}</div>
-                    <div class="flex-1 truncate font-black text-sm uppercase tracking-tight">${h.title}</div>
-                    <button onclick="event.stopPropagation(); toggleFav('${h.number}')" class="p-2">
-                        <i data-lucide="heart" class="w-5 h-5 ${state.favorites.has(h.number) ? 'fill-primary-500 text-primary-500' : 'text-gray-300'}"></i>
-                    </button>
-                `;
-                list.appendChild(item);
-            });
-            lucide.createIcons();
-        }
-
-        document.getElementById('input-search').oninput = (e) => { state.searchQuery = e.target.value; renderHymns(); };
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.className = "filter-btn px-6 py-2.5 rounded-xl bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 text-xs font-black whitespace-nowrap");
-                btn.className = "filter-btn active px-6 py-2.5 rounded-xl bg-primary-600 text-white text-xs font-black shadow-lg shadow-primary-500/30 whitespace-nowrap";
-                state.filter = btn.dataset.filter;
-                renderHymns();
-            };
-        });
-
-        // --- PLAYER LOGIC ---
-        let audioUrl = null;
-        async function carregarHino(num) {
-            state.currentHymnId = num;
-            const h = state.hymns.find(x => x.number === num);
-            document.getElementById('mini-hymn-number').innerText = h.number;
-            document.getElementById('mini-hymn-title').innerText = h.title;
-            document.getElementById('player-number').innerText = h.number;
-            document.getElementById('player-title').innerText = h.title;
-            
-            let lyricsHtml = "";
-            if(h.lyrics?.paragraphs) {
-                lyricsHtml = h.lyrics.paragraphs.map(p => {
-                    const isChorus = p.text.toLowerCase().includes("coro") || p.text.toLowerCase().includes("refrão");
-                    const cssClass = isChorus ? 'lyric-chorus' : 'lyric-stanza';
-                    return `<div class="mb-8 ${cssClass}">${p.text}</div>`;
-                }).join("");
-            } else {
-                lyricsHtml = `<p class="italic text-gray-400">Letra indisponível.</p>`;
-            }
-            document.getElementById('player-lyrics').innerHTML = lyricsHtml;
-            document.getElementById('player-lyrics').scrollTop = 0;
-
-            updateFavBtn();
-
-            const audioBlob = state.audioAvailable ? await dbGet(STORE_AUDIO, num) : null;
-            const controls = document.getElementById('player-controls');
-            const warning = document.getElementById('player-no-audio-warning');
-            const miniPlay = document.getElementById('btn-mini-play');
-
-            if(audioBlob) {
-                if(audioUrl) URL.revokeObjectURL(audioUrl);
-                audioUrl = URL.createObjectURL(audioBlob);
-                audioEl.src = audioUrl;
-                controls.classList.remove('hidden-safe');
-                warning.classList.add('hidden-safe');
-                miniPlay.classList.remove('hidden-safe');
-                play();
-            } else {
-                audioEl.pause();
-                audioEl.src = "";
-                controls.classList.add('hidden-safe');
-                warning.classList.remove('hidden-safe');
-                miniPlay.classList.add('hidden-safe');
-                state.isPlaying = false;
-                updatePlayIcons();
-            }
-
-            document.getElementById('mini-player').classList.remove('hidden-safe');
-            openFullPlayer();
-        }
-
-        function play() { audioEl.play(); state.isPlaying = true; updatePlayIcons(); }
-        function pause() { audioEl.pause(); state.isPlaying = false; updatePlayIcons(); }
-        function updatePlayIcons() {
-            const mini = document.getElementById('icon-mini-play');
-            const main = document.getElementById('icon-play-main');
-            const name = state.isPlaying ? 'pause' : 'play';
-            mini.setAttribute('data-lucide', name);
-            main.setAttribute('data-lucide', name);
-            lucide.createIcons();
-        }
-
-        document.getElementById('btn-play-main').onclick = () => state.isPlaying ? pause() : play();
-        document.getElementById('btn-mini-play').onclick = (e) => { e.stopPropagation(); state.isPlaying ? pause() : play(); };
-
-        document.getElementById('btn-mute').onclick = () => {
-            state.isMuted = !state.isMuted;
-            audioEl.muted = state.isMuted;
-            document.getElementById('icon-mute').setAttribute('data-lucide', state.isMuted ? 'volume-x' : 'volume-2');
-            document.getElementById('btn-mute').classList.toggle('text-red-500', state.isMuted);
-            lucide.createIcons();
         };
 
-        audioEl.ontimeupdate = () => {
-            if(!audioEl.duration) return;
-            const p = (audioEl.currentTime/audioEl.duration)*100;
-            document.getElementById('audio-progress').value = p;
-            document.getElementById('time-current').innerText = formatTime(audioEl.currentTime);
-            document.getElementById('time-total').innerText = formatTime(audioEl.duration);
-        };
-        document.getElementById('audio-progress').oninput = (e) => {
-            if(audioEl.duration) audioEl.currentTime = (e.target.value/100)*audioEl.duration;
-        };
-
-        function formatTime(s) {
-            const m = Math.floor(s/60);
-            const sec = Math.floor(s%60);
-            return `${m}:${sec.toString().padStart(2,'0')}`;
-        }
-
-        document.getElementById('btn-next').onclick = () => {
-            const idx = state.hymns.findIndex(h => h.number === state.currentHymnId);
-            if(idx < state.hymns.length - 1) carregarHino(state.hymns[idx+1].number);
-        };
-        document.getElementById('btn-prev').onclick = () => {
-            const idx = state.hymns.findIndex(h => h.number === state.currentHymnId);
-            if(idx > 0) carregarHino(state.hymns[idx-1].number);
-        };
-
-        function toggleFav(n) {
-            state.favorites.has(n) ? state.favorites.delete(n) : state.favorites.add(n);
-            localStorage.setItem('harpa_favorites', JSON.stringify([...state.favorites]));
-            renderHymns();
-            if(state.currentHymnId === n) updateFavBtn();
-        }
-        function updateFavBtn() {
-            const icon = document.getElementById('icon-favorite');
-            const is = state.favorites.has(state.currentHymnId);
-            icon.className = `w-6 h-6 transition ${is ? 'fill-primary-500 text-primary-500' : 'text-gray-400'}`;
-        }
-        document.getElementById('btn-favorite').onclick = () => toggleFav(state.currentHymnId);
-
-        // --- MODAL SYSTEM ---
-        function openModal(id) {
-            const container = document.getElementById('modal-container');
-            const body = document.getElementById('modal-body');
-            if(id === 'modal-terms') body.innerHTML = document.getElementById('template-terms').innerHTML;
-            else if(id === 'modal-privacy') body.innerHTML = document.getElementById('template-privacy').innerHTML;
-            container.classList.remove('hidden-safe');
-            lucide.createIcons();
-        }
-        function closeModal() { document.getElementById('modal-container').classList.add('hidden-safe'); }
-
-        function openFullPlayer() { document.getElementById('view-player').classList.remove('hidden-safe'); }
-        function closeFullPlayer() { document.getElementById('view-player').classList.add('hidden-safe'); }
-
-        // --- THEME ---
+        // --- SISTEMA DE TEMA ---
         function initTheme() {
             const isDark = localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
             document.documentElement.classList.toggle('dark', isDark);
@@ -667,8 +1044,10 @@
             lucide.createIcons();
         };
 
+        // Executar
         initTheme();
         document.addEventListener('DOMContentLoaded', inicializar);
+
     </script>
 </body>
 </html>
