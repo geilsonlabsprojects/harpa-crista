@@ -1,15 +1,966 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Harpa Cristã Digital</title>
-    <!-- O Tailwind CSS para os estilos -->
+    
+    <!-- Tailwind CSS (Framework de Estilos) -->
     <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <!-- Ponto de entrada do React -->
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+    <!-- JSZip (Para extrair os arquivos locais sem backend) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Lucide Icons (Ícones modernos) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        // Configuração customizada do Tailwind
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Estilizações base e barra de rolagem */
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
+        
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Animações Suaves */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        .slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* Range Slider Customizado (Player de áudio) */
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #3b82f6; cursor: pointer; margin-top: -6px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #d1d5db; border-radius: 2px; }
+        .dark input[type=range]::-webkit-slider-runnable-track { background: #4b5563; }
+        
+        /* Área de letras */
+        .lyrics-container {
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 1.125rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+    <!-- APP CONTAINER -->
+    <div id="app" class="h-screen w-full flex flex-col relative">
+
+        <!-- TELA 1: DOWNLOAD E SETUP -->
+        <div id="screen-download" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-6 hidden">
+            <div class="text-primary-600 dark:text-primary-500 mb-6">
+                <i data-lucide="book-open" class="w-24 h-24"></i>
+            </div>
+            <h1 class="text-3xl font-bold mb-2 text-center">Harpa Cristã Digital</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-center mb-8 max-w-md">
+                Bem-vindo! Para uso 100% offline, precisamos baixar o pacote completo de áudios e letras (636 hinos). Este processo é feito apenas uma vez.
+            </p>
+            
+            <button id="btn-start-download" class="bg-primary-600 hover:bg-primary-500 text-white font-bold py-4 px-8 rounded-full shadow-lg transition-transform transform active:scale-95 flex items-center gap-2">
+                <i data-lucide="download"></i> Baixar Harpa Completa
+            </button>
+
+            <!-- Área de Progresso (Invisível no início) -->
+            <div id="progress-container" class="w-full max-w-md mt-8 hidden">
+                <p id="progress-status" class="text-sm font-semibold mb-2 text-center">Iniciando download...</p>
+                <div class="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700 overflow-hidden">
+                    <div id="progress-bar" class="bg-primary-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <span id="progress-speed">0 MB/s</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- TELA 2: LISTA PRINCIPAL (HINOS) -->
+        <div id="screen-main" class="flex-1 flex flex-col hidden h-full">
+            <!-- Header -->
+            <header class="bg-white dark:bg-gray-800 shadow-sm z-10 px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-primary-100 dark:bg-primary-900 rounded-lg text-primary-600 dark:text-primary-400">
+                        <i data-lucide="music"></i>
+                    </div>
+                    <h1 class="text-xl font-bold">Harpa Cristã</h1>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btn-install-app" class="hidden px-3 py-2 text-sm font-bold bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 rounded-full hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors flex items-center gap-1 shadow-sm">
+                        <i data-lucide="smartphone" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Instalar</span>
+                    </button>
+                    <button id="btn-theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <i data-lucide="moon" id="icon-moon"></i>
+                        <i data-lucide="sun" id="icon-sun" class="hidden text-yellow-400"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Barra de Pesquisa e Filtros -->
+            <div class="p-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 z-10">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-3.5 text-gray-400 w-5 h-5"></i>
+                    <input type="text" id="search-input" placeholder="Buscar por número ou título..." 
+                           class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-shadow">
+                </div>
+                <div class="flex mt-4 gap-2">
+                    <button id="tab-all" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-primary-600 text-white transition-colors">Todos os Hinos</button>
+                    <button id="tab-favs" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">Favoritos</button>
+                </div>
+            </div>
+
+            <!-- Lista de Hinos Virtual (Scroll otimizado) -->
+            <ul id="hymns-list" class="flex-1 overflow-y-auto pb-24 hide-scrollbar p-2">
+                <!-- Itens gerados via JS -->
+            </ul>
+        </div>
+
+
+        <!-- TELA 3: PLAYER E LETRA (Modal / Overlay) -->
+        <div id="screen-player" class="absolute inset-0 z-40 bg-white dark:bg-gray-900 flex flex-col hidden slide-up h-full">
+            <!-- Header do Player -->
+            <header class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
+                <button id="btn-close-player" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <i data-lucide="chevron-down" class="w-6 h-6"></i>
+                </button>
+                <div class="text-center flex-1">
+                    <p class="text-xs text-primary-600 dark:text-primary-400 font-bold tracking-widest uppercase">Hino <span id="player-number"></span></p>
+                    <h2 id="player-title" class="text-lg font-bold truncate max-w-[200px] mx-auto">Título</h2>
+                </div>
+                <div class="flex gap-2">
+                    <button id="btn-fav-player" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        <i data-lucide="heart" id="icon-fav" class="w-6 h-6 text-gray-400"></i>
+                    </button>
+                    <button id="btn-share" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        <i data-lucide="share-2" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Área de Letra com Rolagem -->
+            <div class="flex-1 overflow-y-auto p-6 hide-scrollbar relative">
+                <div id="player-lyrics" class="lyrics-container text-center text-gray-700 dark:text-gray-300 pb-10">
+                    <!-- Letra gerada via JS -->
+                </div>
+            </div>
+
+            <!-- Controles do Player de Áudio -->
+            <div class="bg-gray-50 dark:bg-gray-800 p-6 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                <!-- Barra de Progresso do Áudio -->
+                <div class="flex items-center gap-3 mb-6">
+                    <span id="time-current" class="text-xs font-medium text-gray-500 w-10 text-right">0:00</span>
+                    <input type="range" id="seek-bar" value="0" max="100" class="flex-1">
+                    <span id="time-total" class="text-xs font-medium text-gray-500 w-10">0:00</span>
+                </div>
+
+                <!-- Botões de Controle -->
+                <div class="flex items-center justify-center gap-6 mb-4">
+                    <button id="btn-repeat" class="p-2 text-gray-400 hover:text-primary-600 transition-colors">
+                        <i data-lucide="repeat" class="w-5 h-5"></i>
+                    </button>
+                    <button id="btn-prev" class="p-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors">
+                        <i data-lucide="skip-back" class="w-6 h-6 fill-current"></i>
+                    </button>
+                    <button id="btn-play-pause" class="p-4 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-500 hover:scale-105 transition-all">
+                        <i data-lucide="play" id="icon-play" class="w-8 h-8 fill-current translate-x-0.5"></i>
+                        <i data-lucide="pause" id="icon-pause" class="w-8 h-8 fill-current hidden"></i>
+                    </button>
+                    <button id="btn-next" class="p-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors">
+                        <i data-lucide="skip-forward" class="w-6 h-6 fill-current"></i>
+                    </button>
+                    <button id="btn-export" title="Exportar Letra" class="p-2 text-gray-400 hover:text-primary-600 transition-colors">
+                        <i data-lucide="download-cloud" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <!-- Controle de Volume Oculto Mobile, Visível Desktop -->
+                <div class="hidden md:flex items-center justify-center gap-2 max-w-[200px] mx-auto mt-2">
+                    <i data-lucide="volume-2" class="w-4 h-4 text-gray-400"></i>
+                    <input type="range" id="volume-bar" value="100" max="100" class="flex-1">
+                </div>
+            </div>
+            
+            <!-- Elemento de Audio Nativo Invisível -->
+            <audio id="audio-engine"></audio>
+        </div>
+
+        <!-- Modal de Compartilhamento customizado -->
+        <div id="modal-share" class="absolute inset-0 z-[60] bg-black/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-4">
+            <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl p-6 slide-up shadow-2xl">
+                <h3 class="text-lg font-bold mb-4 text-center">Compartilhar e Exportar</h3>
+                <div class="space-y-3">
+                    <button onclick="app.shareLyrics()" class="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition">
+                        <span class="font-medium">Compartilhar Letra (Texto)</span>
+                        <i data-lucide="message-circle" class="w-5 h-5 text-green-500"></i>
+                    </button>
+                    <button onclick="app.exportTXT()" class="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition">
+                        <span class="font-medium">Exportar Letra (.TXT)</span>
+                        <i data-lucide="file-text" class="w-5 h-5 text-blue-500"></i>
+                    </button>
+                    <button onclick="app.exportJSON()" class="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition">
+                        <span class="font-medium">Exportar Completo (.JSON)</span>
+                        <i data-lucide="code" class="w-5 h-5 text-purple-500"></i>
+                    </button>
+                </div>
+                <button onclick="document.getElementById('modal-share').classList.add('hidden')" class="w-full mt-4 p-3 font-bold text-gray-500 hover:text-gray-800 dark:hover:text-white transition">Cancelar</button>
+            </div>
+        </div>
+
+        <!-- Alertas customizados -->
+        <div id="toast" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg z-[70] transition-opacity duration-300 opacity-0 pointer-events-none">
+            Mensagem
+        </div>
+
+    </div>
+
+    <!-- CÓDIGO JAVASCRIPT PRINCIPAL -->
+    <script>
+        // URLs fornecidas pelo usuário
+        const URL_ZIP_AUDIO = "https://corsproxy.io/?https://archive.org/download/harpaopus/Harpa%28opus%29.zip";
+        const URL_ZIP_LETRA = "https://corsproxy.io/?https://archive.org/download/harpa-letra/harpa-letra.zip";
+
+        // ==========================================
+        // CONFIGURAÇÃO PWA (Manifest e Install Prompt)
+        // ==========================================
+        const setupPWA = () => {
+            // 1. Criação Dinâmica do Manifest para Arquivo Único
+            const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#2563eb"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>`;
+            const iconB64 = btoa(svgIcon);
+            const manifest = {
+                name: "Harpa Cristã Digital",
+                short_name: "Harpa",
+                start_url: window.location.href,
+                display: "standalone",
+                background_color: "#ffffff",
+                theme_color: "#2563eb",
+                icons: [{
+                    src: `data:image/svg+xml;base64,${iconB64}`,
+                    sizes: "512x512",
+                    type: "image/svg+xml",
+                    purpose: "any maskable"
+                }]
+            };
+            
+            // Injeta o manifest no <head>
+            const blob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
+            const manifestURL = URL.createObjectURL(blob);
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = manifestURL;
+            document.head.appendChild(link);
+
+            // 2. Mock de Service Worker (Necessário para o Chrome habilitar a instalação PWA)
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', (e) => self.skipWaiting());
+                    self.addEventListener('activate', (e) => self.clients.claim());
+                    self.addEventListener('fetch', (e) => {});
+                `;
+                const swBlob = new Blob([swCode], {type: 'application/javascript'});
+                const swUrl = URL.createObjectURL(swBlob);
+                navigator.serviceWorker.register(swUrl).catch(e => console.log("SW escopo restrito no formato Single-File."));
+            }
+
+            // 3. Captura do Evento de Instalação (Mostra o botão apenas se o app for instalável)
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                window.deferredPrompt = e;
+                const btnInstall = document.getElementById('btn-install-app');
+                if(btnInstall) btnInstall.classList.remove('hidden');
+            });
+        };
+
+        // ==========================================
+        // 1. CAMADA DE BANCO DE DADOS (IndexedDB)
+        // ==========================================
+        // Usamos IndexedDB porque LocalStorage suporta apenas ~5MB (Áudios exigem centenas de MBs)
+        class DB {
+            constructor() {
+                this.dbName = "HarpaCristaDB";
+                this.version = 1;
+                this.db = null;
+            }
+
+            init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.version);
+                    
+                    request.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains('hymns')) {
+                            db.createObjectStore('hymns', { keyPath: 'numero' });
+                        }
+                        if (!db.objectStoreNames.contains('audio')) {
+                            db.createObjectStore('audio', { keyPath: 'numero' });
+                        }
+                        if (!db.objectStoreNames.contains('config')) {
+                            db.createObjectStore('config', { keyPath: 'key' });
+                        }
+                    };
+
+                    request.onsuccess = (e) => {
+                        this.db = e.target.result;
+                        resolve(true);
+                    };
+                    
+                    request.onerror = (e) => reject(e);
+                });
+            }
+
+            async setConfig(key, value) {
+                return this._tx('config', 'readwrite', store => store.put({ key, value }));
+            }
+
+            async getConfig(key) {
+                return this._tx('config', 'readonly', store => store.get(key)).then(res => res ? res.value : null);
+            }
+
+            async saveHymn(numero, data) {
+                return this._tx('hymns', 'readwrite', store => store.put({ numero, ...data }));
+            }
+
+            async saveAudio(numero, blob) {
+                return this._tx('audio', 'readwrite', store => store.put({ numero, blob }));
+            }
+
+            async getAllHymns() {
+                return this._tx('hymns', 'readonly', store => store.getAll());
+            }
+
+            async getAudio(numero) {
+                return this._tx('audio', 'readonly', store => store.get(numero)).then(res => res ? res.blob : null);
+            }
+            
+            async countHymns() {
+                return this._tx('hymns', 'readonly', store => store.count());
+            }
+
+            _tx(storeName, mode, callback) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction(storeName, mode);
+                    const store = transaction.objectStore(storeName);
+                    const request = callback(store);
+                    
+                    if (request && typeof request.onsuccess !== 'undefined') {
+                        request.onsuccess = () => resolve(request.result);
+                        request.onerror = () => reject(request.error);
+                    } else {
+                        transaction.oncomplete = () => resolve();
+                        transaction.onerror = () => reject(transaction.error);
+                    }
+                });
+            }
+        }
+
+
+        // ==========================================
+        // 2. SISTEMA DE DOWNLOAD E EXTRAÇÃO ZIP
+        // ==========================================
+        class Downloader {
+            static async fetchWithProgress(url, onProgress) {
+                try {
+                    // Fetch padrão
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                    
+                    const contentLength = response.headers.get('content-length');
+                    const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
+                    let loadedBytes = 0;
+                    
+                    const reader = response.body.getReader();
+                    const chunks = [];
+                    const startTime = Date.now();
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        chunks.push(value);
+                        loadedBytes += value.length;
+                        
+                        const elapsedSecs = (Date.now() - startTime) / 1000;
+                        const speed = elapsedSecs > 0 ? (loadedBytes / 1024 / 1024 / elapsedSecs).toFixed(1) : 0;
+                        
+                        onProgress({ loadedBytes, totalBytes, speed });
+                    }
+
+                    // Junta todos os chunks em um Blob
+                    return new Blob(chunks);
+                } catch (error) {
+                    console.error("Erro no fetch:", error);
+                    throw new Error("Falha no download. Verifique sua conexão. O bloqueio de CORS pode estar ativo.");
+                }
+            }
+
+            // Otimizado: Extrai os arquivos sequencialmente para não sobrecarregar a memória do celular
+            static async extractAndSaveLetras(zipBlob, db, updateStatus) {
+                const zip = await JSZip.loadAsync(zipBlob);
+                const files = Object.values(zip.files).filter(f => !f.dir && f.name.endsWith('.json'));
+                let count = 0;
+
+                for (let file of files) {
+                    try {
+                        const content = await file.async("string");
+                        const json = JSON.parse(content);
+                        
+                        // Extrair número (do arquivo ou do JSON)
+                        const match = file.name.match(/\d+/);
+                        const numero = json.numero || (match ? parseInt(match[0]) : count + 1);
+                        
+                        // Tratamento flexível da letra (pode ser array ou string longa)
+                        let letraStr = json.letra || json.lyrics || json.texto || "";
+                        if (Array.isArray(letraStr)) {
+                            letraStr = letraStr.map(item => {
+                                if(typeof item === 'string') return item;
+                                return item.estrofe || item.coro || item.linhas || "";
+                            }).join('\n\n');
+                        }
+
+                        const data = {
+                            titulo: json.titulo || json.title || `Hino ${numero}`,
+                            letra: letraStr
+                        };
+
+                        await db.saveHymn(numero, data);
+                        count++;
+                        if(count % 10 === 0) updateStatus(`Extraindo Letras: ${count}/${files.length}`);
+                    } catch (e) {
+                        console.warn("Erro ao processar letra:", file.name, e);
+                    }
+                }
+                updateStatus(`Letras extraídas: ${count} hinos.`);
+            }
+
+            static async extractAndSaveAudio(zipBlob, db, updateStatus) {
+                const zip = await JSZip.loadAsync(zipBlob);
+                const files = Object.values(zip.files).filter(f => !f.dir && f.name.match(/\.(opus|mp3|ogg)$/i));
+                let count = 0;
+
+                for (let file of files) {
+                    try {
+                        const blob = await file.async("blob");
+                        const match = file.name.match(/\d+/);
+                        const numero = match ? parseInt(match[0]) : count + 1;
+                        
+                        await db.saveAudio(numero, blob);
+                        count++;
+                        if(count % 5 === 0) updateStatus(`Extraindo Áudios: ${count}/${files.length}`);
+                    } catch (e) {
+                        console.warn("Erro ao processar áudio:", file.name, e);
+                    }
+                }
+                updateStatus(`Áudios extraídos com sucesso!`);
+            }
+        }
+
+
+        // ==========================================
+        // 3. CONTROLADOR PRINCIPAL DA APLICAÇÃO
+        // ==========================================
+        class App {
+            constructor() {
+                this.db = new DB();
+                this.hymns = [];
+                this.filteredHymns = [];
+                this.favorites = new Set();
+                this.currentHymnNumber = null;
+                this.currentAudioUrl = null;
+                
+                // Player state
+                this.audio = document.getElementById('audio-engine');
+                this.isRepeat = false;
+
+                // Cache DOM
+                this.screens = {
+                    download: document.getElementById('screen-download'),
+                    main: document.getElementById('screen-main'),
+                    player: document.getElementById('screen-player')
+                };
+                
+                this.listContainer = document.getElementById('hymns-list');
+                this.searchInput = document.getElementById('search-input');
+            }
+
+            async init() {
+                lucide.createIcons();
+                this.setupTheme();
+                
+                try {
+                    await this.db.init();
+                    const isDownloaded = await this.db.getConfig('isDownloaded');
+                    const favs = await this.db.getConfig('favorites');
+                    if (favs) this.favorites = new Set(JSON.parse(favs));
+                    
+                    if (isDownloaded) {
+                        await this.loadMainScreen();
+                    } else {
+                        this.showScreen('download');
+                        document.getElementById('btn-start-download').addEventListener('click', () => this.startDownloadProcess());
+                    }
+                } catch (e) {
+                    this.toast("Erro ao inicializar o banco de dados do navegador.", true);
+                }
+
+                this.setupEventListeners();
+            }
+
+            // --- Lógica de Download ---
+            async startDownloadProcess() {
+                const btn = document.getElementById('btn-start-download');
+                const progressContainer = document.getElementById('progress-container');
+                const bar = document.getElementById('progress-bar');
+                const percentText = document.getElementById('progress-percent');
+                const speedText = document.getElementById('progress-speed');
+                const statusText = document.getElementById('progress-status');
+
+                btn.classList.add('hidden');
+                progressContainer.classList.remove('hidden');
+
+                const updateProgress = (info) => {
+                    if (info.totalBytes > 0) {
+                        const pct = Math.round((info.loadedBytes / info.totalBytes) * 100);
+                        bar.style.width = `${pct}%`;
+                        percentText.innerText = `${pct}%`;
+                    } else {
+                        // Caso falte content-length
+                        const mb = (info.loadedBytes / 1024 / 1024).toFixed(1);
+                        percentText.innerText = `${mb} MB baixados`;
+                        bar.style.width = "100%"; // Indeterminado
+                    }
+                    speedText.innerText = `${info.speed} MB/s`;
+                };
+
+                try {
+                    // 1. Download e Extração de Letras
+                    statusText.innerText = "Baixando letras da Harpa...";
+                    const zipLetraBlob = await Downloader.fetchWithProgress(URL_ZIP_LETRA, updateProgress);
+                    statusText.innerText = "Extraindo letras. Aguarde...";
+                    await Downloader.extractAndSaveLetras(zipLetraBlob, this.db, (msg) => statusText.innerText = msg);
+
+                    // Limpa variáveis pesadas para liberar RAM
+                    bar.style.width = "0%";
+                    
+                    // 2. Download e Extração de Áudio (Muito mais pesado)
+                    statusText.innerText = "Baixando áudios (Isso pode demorar)...";
+                    const zipAudioBlob = await Downloader.fetchWithProgress(URL_ZIP_AUDIO, updateProgress);
+                    statusText.innerText = "Extraindo áudios e salvando no dispositivo...";
+                    await Downloader.extractAndSaveAudio(zipAudioBlob, this.db, (msg) => statusText.innerText = msg);
+
+                    // Concluído
+                    await this.db.setConfig('isDownloaded', true);
+                    statusText.innerText = "Pronto! Abrindo aplicativo...";
+                    setTimeout(() => this.loadMainScreen(), 1500);
+
+                } catch (error) {
+                    statusText.innerText = "Erro no download: " + error.message;
+                    btn.classList.remove('hidden');
+                    btn.innerText = "Tentar Novamente";
+                }
+            }
+
+            // --- Lógica da Tela Principal ---
+            async loadMainScreen() {
+                this.hymns = await this.db.getAllHymns();
+                // Ordenar por número
+                this.hymns.sort((a, b) => a.numero - b.numero);
+                this.filteredHymns = this.hymns;
+                
+                this.showScreen('main');
+                this.renderList();
+            }
+
+            renderList(showFavoritesOnly = false) {
+                this.listContainer.innerHTML = '';
+                
+                let listToRender = this.filteredHymns;
+                if (showFavoritesOnly) {
+                    listToRender = listToRender.filter(h => this.favorites.has(h.numero));
+                }
+
+                if (listToRender.length === 0) {
+                    this.listContainer.innerHTML = `<div class="p-8 text-center text-gray-500">Nenhum hino encontrado.</div>`;
+                    return;
+                }
+
+                // Criação em lote para performance (Fragment)
+                const fragment = document.createDocumentFragment();
+                listToRender.forEach(hino => {
+                    const li = document.createElement('li');
+                    li.className = "flex items-center justify-between p-4 mb-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm cursor-pointer hover:bg-primary-50 dark:hover:bg-gray-700 transition-colors";
+                    li.onclick = () => this.openPlayer(hino.numero);
+                    
+                    const isFav = this.favorites.has(hino.numero);
+                    
+                    li.innerHTML = `
+                        <div class="flex items-center gap-4 truncate">
+                            <span class="flex items-center justify-center w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 font-bold font-mono text-sm shrink-0">
+                                ${hino.numero}
+                            </span>
+                            <span class="font-medium text-gray-900 dark:text-gray-100 truncate">${hino.titulo}</span>
+                        </div>
+                        <i data-lucide="heart" class="w-5 h-5 shrink-0 ${isFav ? 'fill-primary-500 text-primary-500' : 'text-gray-300 dark:text-gray-600'}"></i>
+                    `;
+                    fragment.appendChild(li);
+                });
+                
+                this.listContainer.appendChild(fragment);
+                lucide.createIcons(); // Re-renderiza ícones novos
+            }
+
+            handleSearch(e) {
+                const query = e.target.value.toLowerCase().trim();
+                const isFavTab = document.getElementById('tab-favs').classList.contains('bg-primary-600');
+
+                if (query === "") {
+                    this.filteredHymns = this.hymns;
+                } else {
+                    this.filteredHymns = this.hymns.filter(h => 
+                        h.numero.toString().includes(query) || 
+                        h.titulo.toLowerCase().includes(query)
+                    );
+                }
+                this.renderList(isFavTab);
+            }
+
+            // --- Lógica do Player ---
+            async openPlayer(numero) {
+                const hino = this.hymns.find(h => h.numero === numero);
+                if (!hino) return;
+
+                this.currentHymnNumber = numero;
+                
+                // UI do Player
+                document.getElementById('player-number').innerText = hino.numero.toString().padStart(3, '0');
+                document.getElementById('player-title').innerText = hino.titulo;
+                document.getElementById('player-lyrics').innerText = hino.letra;
+                this.updateFavoriteIconPlayer();
+
+                // Mostra a tela
+                this.screens.player.classList.remove('hidden');
+
+                // Carregar Áudio Local
+                try {
+                    const audioBlob = await this.db.getAudio(numero);
+                    if (audioBlob) {
+                        // Limpa blob anterior para não vazar memória
+                        if (this.currentAudioUrl) URL.revokeObjectURL(this.currentAudioUrl);
+                        
+                        this.currentAudioUrl = URL.createObjectURL(audioBlob);
+                        this.audio.src = this.currentAudioUrl;
+                        this.audio.load();
+                        this.playAudio();
+                    } else {
+                        this.toast("Áudio não encontrado para este hino.");
+                        this.pauseAudio();
+                    }
+                } catch (e) {
+                    console.error(e);
+                    this.toast("Erro ao carregar o áudio.");
+                }
+            }
+
+            closePlayer() {
+                this.screens.player.classList.add('hidden');
+                // Mantém tocando em background, apenas minimiza visualmente.
+                // Se quisesse parar: this.pauseAudio();
+            }
+
+            // --- Controles de Mídia ---
+            playAudio() {
+                this.audio.play().catch(e => console.log("Auto-play prevenido pelo navegador"));
+                document.getElementById('icon-play').classList.add('hidden');
+                document.getElementById('icon-pause').classList.remove('hidden');
+            }
+
+            pauseAudio() {
+                this.audio.pause();
+                document.getElementById('icon-pause').classList.add('hidden');
+                document.getElementById('icon-play').classList.remove('hidden');
+            }
+
+            togglePlayPause() {
+                if (this.audio.paused) this.playAudio();
+                else this.pauseAudio();
+            }
+
+            playNext() {
+                let currentIndex = this.filteredHymns.findIndex(h => h.numero === this.currentHymnNumber);
+                if (currentIndex >= 0 && currentIndex < this.filteredHymns.length - 1) {
+                    this.openPlayer(this.filteredHymns[currentIndex + 1].numero);
+                }
+            }
+
+            playPrev() {
+                let currentIndex = this.filteredHymns.findIndex(h => h.numero === this.currentHymnNumber);
+                if (currentIndex > 0) {
+                    this.openPlayer(this.filteredHymns[currentIndex - 1].numero);
+                }
+            }
+
+            formatTime(seconds) {
+                if (isNaN(seconds)) return "0:00";
+                const m = Math.floor(seconds / 60);
+                const s = Math.floor(seconds % 60);
+                return `${m}:${s.toString().padStart(2, '0')}`;
+            }
+
+            updateProgressUI() {
+                const seekBar = document.getElementById('seek-bar');
+                const currTime = document.getElementById('time-current');
+                const totalTime = document.getElementById('time-total');
+
+                if (this.audio.duration) {
+                    const percent = (this.audio.currentTime / this.audio.duration) * 100;
+                    seekBar.value = percent;
+                    currTime.innerText = this.formatTime(this.audio.currentTime);
+                    totalTime.innerText = this.formatTime(this.audio.duration);
+                }
+            }
+
+            seekAudio(e) {
+                if (this.audio.duration) {
+                    const seekTo = this.audio.duration * (e.target.value / 100);
+                    this.audio.currentTime = seekTo;
+                }
+            }
+
+            // --- Favoritos e Extras ---
+            toggleFavorite() {
+                if (!this.currentHymnNumber) return;
+                if (this.favorites.has(this.currentHymnNumber)) {
+                    this.favorites.delete(this.currentHymnNumber);
+                } else {
+                    this.favorites.add(this.currentHymnNumber);
+                }
+                // Persistir
+                this.db.setConfig('favorites', JSON.stringify([...this.favorites]));
+                this.updateFavoriteIconPlayer();
+                
+                // Atualiza lista em background se visível
+                const isFavTab = document.getElementById('tab-favs').classList.contains('bg-primary-600');
+                this.renderList(isFavTab);
+            }
+
+            updateFavoriteIconPlayer() {
+                const icon = document.getElementById('icon-fav');
+                if (this.favorites.has(this.currentHymnNumber)) {
+                    icon.classList.add('fill-primary-500', 'text-primary-500');
+                    icon.classList.remove('text-gray-400');
+                } else {
+                    icon.classList.remove('fill-primary-500', 'text-primary-500');
+                    icon.classList.add('text-gray-400');
+                }
+            }
+
+            // --- Compartilhamento e Exportação ---
+            openShareModal() {
+                document.getElementById('modal-share').classList.remove('hidden');
+            }
+
+            async shareLyrics() {
+                const hino = this.hymns.find(h => h.numero === this.currentHymnNumber);
+                if(!hino) return;
+                
+                const text = `${hino.numero} - ${hino.titulo}\n\n${hino.letra}\n\n(Harpa Cristã Digital)`;
+                
+                if (navigator.share) {
+                    try {
+                        await navigator.share({ title: hino.titulo, text: text });
+                    } catch(e) { console.log(e); }
+                } else {
+                    this.copyToClipboard(text);
+                }
+                document.getElementById('modal-share').classList.add('hidden');
+            }
+
+            exportTXT() {
+                const hino = this.hymns.find(h => h.numero === this.currentHymnNumber);
+                if(!hino) return;
+                const text = `${hino.numero} - ${hino.titulo}\n\n${hino.letra}`;
+                this.downloadFile(`Hino_${hino.numero}_${hino.titulo}.txt`, text, "text/plain");
+                document.getElementById('modal-share').classList.add('hidden');
+            }
+
+            exportJSON() {
+                const hino = this.hymns.find(h => h.numero === this.currentHymnNumber);
+                if(!hino) return;
+                const json = JSON.stringify(hino, null, 2);
+                this.downloadFile(`Hino_${hino.numero}_${hino.titulo}.json`, json, "application/json");
+                document.getElementById('modal-share').classList.add('hidden');
+            }
+
+            downloadFile(filename, content, mimeType) {
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                this.toast("Arquivo exportado com sucesso!");
+            }
+
+            copyToClipboard(text) {
+                // Tenta nova API ou fallback (comando) para garantir que funcione em iframes
+                try {
+                    document.execCommand('copy'); // Usado como fallback confiavel em webviews antigas
+                    navigator.clipboard.writeText(text).then(() => {
+                        this.toast("Letra copiada para a área de transferência!");
+                    }).catch(() => {
+                        this.fallbackCopy(text);
+                    });
+                } catch (e) { this.fallbackCopy(text); }
+            }
+            
+            fallbackCopy(text) {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try { document.execCommand('copy'); this.toast("Copiado!"); } 
+                catch (err) { this.toast("Erro ao copiar."); }
+                document.body.removeChild(textArea);
+            }
+
+            // --- Utilitários da Interface ---
+            showScreen(name) {
+                Object.values(this.screens).forEach(s => s.classList.add('hidden'));
+                this.screens[name].classList.remove('hidden');
+            }
+
+            setupTheme() {
+                const isDark = localStorage.getItem('theme') === 'dark' || 
+                              (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                    document.getElementById('icon-moon').classList.add('hidden');
+                    document.getElementById('icon-sun').classList.remove('hidden');
+                }
+            }
+
+            toggleTheme() {
+                const html = document.documentElement;
+                if (html.classList.contains('dark')) {
+                    html.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                    document.getElementById('icon-moon').classList.remove('hidden');
+                    document.getElementById('icon-sun').classList.add('hidden');
+                } else {
+                    html.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                    document.getElementById('icon-moon').classList.add('hidden');
+                    document.getElementById('icon-sun').classList.remove('hidden');
+                }
+            }
+
+            toast(msg, isError = false) {
+                const el = document.getElementById('toast');
+                el.innerText = msg;
+                el.className = `absolute top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-lg z-[70] transition-opacity duration-300 pointer-events-none text-white ${isError ? 'bg-red-500' : 'bg-gray-800 dark:bg-gray-100 dark:text-black'}`;
+                el.style.opacity = 1;
+                setTimeout(() => el.style.opacity = 0, 3000);
+            }
+
+            // --- Event Listeners Setup ---
+            setupEventListeners() {
+                // UI Geral
+                document.getElementById('btn-theme-toggle').addEventListener('click', () => this.toggleTheme());
+                
+                // Botão de Instalação PWA
+                const btnInstallApp = document.getElementById('btn-install-app');
+                if(btnInstallApp) {
+                    btnInstallApp.addEventListener('click', async () => {
+                        if (window.deferredPrompt) {
+                            window.deferredPrompt.prompt();
+                            const { outcome } = await window.deferredPrompt.userChoice;
+                            if (outcome === 'accepted') {
+                                btnInstallApp.classList.add('hidden'); // Esconde o botão após instalar
+                            }
+                            window.deferredPrompt = null;
+                        }
+                    });
+                }
+                
+                // Abas Principais
+                const tabAll = document.getElementById('tab-all');
+                const tabFavs = document.getElementById('tab-favs');
+                
+                tabAll.addEventListener('click', () => {
+                    tabAll.className = "flex-1 py-2 text-sm font-semibold rounded-lg bg-primary-600 text-white transition-colors";
+                    tabFavs.className = "flex-1 py-2 text-sm font-semibold rounded-lg bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors";
+                    this.searchInput.value = '';
+                    this.handleSearch({target: {value: ''}}); // reseta filtro
+                });
+
+                tabFavs.addEventListener('click', () => {
+                    tabFavs.className = "flex-1 py-2 text-sm font-semibold rounded-lg bg-primary-600 text-white transition-colors";
+                    tabAll.className = "flex-1 py-2 text-sm font-semibold rounded-lg bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors";
+                    this.searchInput.value = '';
+                    this.renderList(true); // renderiza apenas favs
+                });
+
+                this.searchInput.addEventListener('input', (e) => this.handleSearch(e));
+
+                // Player Básico
+                document.getElementById('btn-close-player').addEventListener('click', () => this.closePlayer());
+                document.getElementById('btn-play-pause').addEventListener('click', () => this.togglePlayPause());
+                document.getElementById('btn-next').addEventListener('click', () => this.playNext());
+                document.getElementById('btn-prev').addEventListener('click', () => this.playPrev());
+                
+                const btnRepeat = document.getElementById('btn-repeat');
+                btnRepeat.addEventListener('click', () => {
+                    this.isRepeat = !this.isRepeat;
+                    this.audio.loop = this.isRepeat;
+                    if(this.isRepeat) btnRepeat.classList.add('text-primary-600');
+                    else btnRepeat.classList.remove('text-primary-600');
+                });
+
+                // Audio Events
+                this.audio.addEventListener('timeupdate', () => this.updateProgressUI());
+                this.audio.addEventListener('ended', () => {
+                    if(!this.isRepeat) this.playNext();
+                });
+                
+                document.getElementById('seek-bar').addEventListener('input', (e) => this.seekAudio(e));
+                
+                const volBar = document.getElementById('volume-bar');
+                if(volBar) {
+                    volBar.addEventListener('input', (e) => this.audio.volume = e.target.value / 100);
+                }
+
+                // Header do Player
+                document.getElementById('btn-fav-player').addEventListener('click', () => this.toggleFavorite());
+                document.getElementById('btn-share').addEventListener('click', () => this.openShareModal());
+                document.getElementById('btn-export').addEventListener('click', () => this.openShareModal());
+                
+                // Fechar modal clicando fora
+                document.getElementById('modal-share').addEventListener('click', (e) => {
+                    if (e.target.id === 'modal-share') e.target.classList.add('hidden');
+                });
+            }
+        }
+
+        // Inicializa a aplicação ao carregar a página
+        window.addEventListener('DOMContentLoaded', () => {
+            setupPWA(); // Inicializa infraestrutura PWA
+            window.app = new App();
+            window.app.init();
+        });
+
+    </script>
+</body>
 </html>
